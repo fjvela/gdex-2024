@@ -1,4 +1,4 @@
-﻿@model GloboTicket.Frontend.Models.Api.Event
+@model GloboTicket.Frontend.Models.Api.Event
 
 <form asp-action="SaveEvent" asp-controller="EventCatalog" method="post" class="container mt-5">
     <div class="form-group">
@@ -20,11 +20,13 @@
     <div class="form-group">
         <label for="Date">Date</label>
         <input type="date" 
+               data-smartpaste-description="A date in the format of YYYY-MM-dd if you can't find the year assume current year 2024"
                class="form-control" id="Date" asp-for="Date">
     </div>
     <div class="form-group">
         <label for="Price">Price</label>
         <input type="text"
+               data-smartpaste-description="Price of a single ticket as a integer value like: 45"
                class="form-control" id="Price" asp-for="Price" placeholder="Enter price">
     </div>
     <div class="form-group">
@@ -36,5 +38,6 @@
         <input type="text" class="form-control" id="ImageUrl" asp-for="ImageUrl" placeholder="Enter image URL">
     </div>
     <br/>
+    <smart-paste-button>Smart paste</smart-paste-button>
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
