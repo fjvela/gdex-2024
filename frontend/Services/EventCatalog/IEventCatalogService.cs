@@ -1,7 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
 using GloboTicket.Catalog.Controllers;
 using GloboTicket.Frontend.Models.Api;
 
@@ -14,5 +10,7 @@ namespace GloboTicket.Frontend.Services
         Task<Event> GetEvent(Guid id);
 
         Task CreateEvent(CreateEventRequest createEventRequest);
+
+        Task<IEnumerable<Event>> GetRecommendations(string artist);
     }
 }

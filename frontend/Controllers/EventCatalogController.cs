@@ -1,10 +1,12 @@
-﻿using GloboTicket.Catalog.Controllers;
+using GloboTicket.Catalog.Controllers;
 using GloboTicket.Frontend.Extensions;
 using GloboTicket.Frontend.Models;
 using GloboTicket.Frontend.Models.Api;
 using GloboTicket.Frontend.Models.View;
 using GloboTicket.Frontend.Services;
 using Microsoft.AspNetCore.Mvc;
+
+using Event=GloboTicket.Frontend.Models.Api.Event;
 
 namespace GloboTicket.Frontend.Controllers
 {
@@ -51,6 +53,23 @@ namespace GloboTicket.Frontend.Controllers
         public IActionResult Create()
         {
             return View("Edit", new Event());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Recommendations([FromForm] GetRecommendations getRecommendations)
+        {
+            var events = await eventCatalogService.GetRecommendations(getRecommendations.Artist);
+            return View("Recommendations",
+                        new EventListModel
+                        {
+                            Events = events,
+                            NumberOfItems = events.Count(),
+                        });
+        }
+
+        public IActionResult Recommend()
+        {
+            return View();
         }
         
         public async Task<IActionResult> SaveEvent([FromForm] CreateEventRequest createEventRequest)
