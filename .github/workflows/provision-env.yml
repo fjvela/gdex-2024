@@ -1,0 +1,194 @@
+name: Provision infrastructure
+
+on:
+  # only run when manually triggered
+  workflow_dispatch:
+
+  # only run when this file has been changed:
+  push:
+    paths:
+      - ".github/workflows/provision-env.yml"
+
+jobs:
+  provision:
+    name: Provision infrastructure
+    runs-on: ubuntu-latest
+    # best practice to have the most limited amount of permissions as needed
+    permissions:
+      contents: read
+    # don't run on the first execution after the repo creation to prevent errors.
+    # Secrets might not be inserted after repo creation, since we do this from a template
+    if: github.run_number != 1
+    env:
+      # settings for a more secure Azure CLI, read more info here: https://jessehouwing.net/recommendations-for-using-azure-cli-in-your-workflow
+      AZURE_CORE_ONLY_SHOW_ERRORS: TRUE
+      AZURE_CORE_ERROR_RECOMMENDATION: FALSE
+      AZURE_CORE_COLLECT_TELEMETRY: FALSE
+      AZURE_LOGGING_ENABLE_LOG_FILE: FALSE
+      AZURE_CORE_SURVEY_MESSAGE: FALSE
+      AZURE_AUTO-UPGRADE_ENABLE: FALSE
+      AZURE_CORE_NO_COLOR: TRUE
+      AZURE_EXTENSION_USE_DYNAMIC_INSTALL: FALSE
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2.0.0
+        with:
+          creds: '{"clientId":"${{ vars.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ vars.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ vars.AZURE_TENANT_ID }}"}'
+
+      - name: Create Azure resources
+        shell: pwsh
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = "Stop"
+
+          function Invoke-ScriptBlockWithRetry {
+            [CmdletBinding()]
+            param (
+                [Parameter(Mandatory = $true)]
+                [scriptblock] $RetryBlock,
+                [Parameter(Mandatory = $false)]
+                [int] $MaxAttempts = 3,
+                [Parameter(Mandatory = $false)]
+                [int] $DelayInSeconds = 10,
+                [Parameter(Mandatory = $false)]
+                [switch] $StartWithDelay = $false
+            )
+
+            process {
+              $attempts = 1
+
+              do {
+                if ($StartWithDelay) {
+                  Start-Sleep -Seconds $DelayInSeconds
+                }
+
+                try {
+                  return Invoke-Command -ScriptBlock $RetryBlock
+                }
+                catch {
+                  if ($attempts -ge $MaxAttempts) {
+                    throw
+                  }
+                  else {
+                    Write-Host "Attempt $attempts failed. Retrying after $DelayInSeconds seconds. Error message: $_"
+                    Start-Sleep -Seconds $DelayInSeconds
+
+                    $attempts++
+                  }
+                }
+              } while ($true)
+            }
+          }
+
+          function Invoke-AzureCli {
+            [CmdletBinding(SupportsShouldProcess)]
+            param (
+                [Parameter(Mandatory = $true)]
+                [scriptblock] $ScriptBlock
+            )
+
+            process {
+                if ($PSCmdlet.ShouldProcess($ScriptBlock)) {
+                  return Invoke-ScriptBlockWithRetry -RetryBlock {
+                    Invoke-Command -ScriptBlock $ScriptBlock
+                    if ($LASTEXITCODE) {
+                      throw "Detected a non zero exit code. The exit code was $LASTEXITCODE."
+                  }
+                }
+              }
+            }
+          }
+
+          function AddWebApplication {
+            param (
+              [Parameter(Mandatory = $true)]
+              [object] $asp,
+              [Parameter(Mandatory = $true)]
+              [string] $webAppName,
+              [Parameter(Mandatory = $true)]
+              [string] $hostName
+            )
+
+            Write-Host "Creating web application [${webAppName}]..."
+            $wa=Invoke-AzureCli -ScriptBlock { az webapp create --subscription $asp.subscription --resource-group $asp.resourceGroup --name $webAppName --plan $asp.name --tags gdex=2024 } | ConvertFrom-Json
+            Write-Host $wa
+
+            Write-Host "Configuring web application [${webAppName}] custom hostname [${hostName}]..."
+            $configHostname=Invoke-AzureCli -ScriptBlock { az webapp config hostname add --subscription $asp.subscription --resource-group $asp.resourceGroup --webapp-name $wa.name --hostname $hostName } | ConvertFrom-Json
+            Write-Host $configHostname
+
+            Write-Host "Upload web application [${webAppName}] SSL certificate [${hostName}]..."
+            $configSsl=Invoke-AzureCli -ScriptBlock { az webapp config ssl upload --subscription $asp.subscription --resource-group $asp.resourceGroup --name $wa.name --certificate-file ./GloboTicket.pfx --certificate-password ${{ secrets.SSL_CERTIFICATE_PASSWORD }} } | ConvertFrom-Json
+            Write-Host $configSsl
+
+            Write-Host "Binding web application [${webAppName}] managed SSL certificate [${hostName}]..."
+            $configSslBind=Invoke-AzureCli -ScriptBlock { az webapp config ssl bind --subscription $asp.subscription --resource-group $asp.resourceGroup --name $wa.name --hostname $hostName --ssl-type SNI --certificate-thumbprint $configSsl.thumbprint }
+            Write-Host $configSslBind
+          }
+
+          $certificatePath='./GloboTicket.pfx'
+          $certificateBase64='${{ secrets.SSL_CERTIFICATE }}'
+          [byte[]]$certificateBytes = [convert]::FromBase64String($certificateBase64)
+          [System.IO.File]::WriteAllBytes($certificatePath,$certificateBytes)
+
+          $subscriptionId='${{ vars.AZURE_SUBSCRIPTION_ID }}'
+          $repo='${{ github.repository }}'
+          $owner='${{ github.repository_owner }}'
+
+          $teamName=$repo -replace "${owner}/", ""
+          $resourceGroupName="rg-${teamName}"
+          $appServicePlanName="asp-${teamName}"
+          $webAppCatalogName = "app-${teamName}-catalog"
+          $webAppOrderingName = "app-${teamName}-ordering"
+          $webAppFrontendName = "app-${teamName}-frontend"
+
+          Write-Host "Selecting subscription [${subscriptionId}]..."
+          Invoke-AzureCli -ScriptBlock { az account set --subscription $subscriptionId }
+
+          Write-Host "Showing resource group [${resourceGroupName}]..."
+          $rg = Invoke-AzureCli -ScriptBlock { az group show --subscription $subscriptionId --resource-group $resourceGroupName } | ConvertFrom-Json
+          Write-Host $rg
+
+          Write-Host "Creating App Service Plan [${appServicePlanName}] in Resource Group [${resourceGroupName}]"
+          $asp = Invoke-AzureCli -ScriptBlock { az appservice plan create --subscription $subscriptionId --resource-group $resourceGroupName --name $appServicePlanName --sku S1 --tags gdex=2024 } | ConvertFrom-Json
+
+          AddWebApplication -asp $asp -webAppName "app-${teamName}-catalog" -hostName "${teamName}-catalog.globoticket.com"
+          AddWebApplication -asp $asp -webAppName "app-${teamName}-ordering" -hostName "${teamName}-ordering.globoticket.com"
+          AddWebApplication -asp $asp -webAppName "app-${teamName}-frontend" -hostName "${teamName}.globoticket.com"
+
+  deploy-ordering-app:
+    runs-on: ubuntu-latest
+    needs: provision
+
+    # best practice to have the most limited amount of permissions as needed
+    permissions:
+      actions: write # needed to trigger the other workflow
+    steps:
+      - name: Invoke workflow without inputs
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: build-deploy-ordering.yml
+
+  deploy-catalog-app:
+    runs-on: ubuntu-latest
+    needs: provision
+    # best practice to have the most limited amount of permissions as needed
+    permissions:
+      actions: write # needed to trigger the other workflow
+    steps:
+      - name: Invoke workflow without inputs
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: build-deploy-catalog.yml
+
+  deploy-frontend-app:
+    runs-on: ubuntu-latest
+    needs: provision
+    # best practice to have the most limited amount of permissions as needed
+    permissions:
+      actions: write # needed to trigger the other workflow
+    steps:
+      - name: Invoke workflow without inputs
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: build-deploy-frontend.yml

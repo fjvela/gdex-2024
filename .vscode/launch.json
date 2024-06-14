@@ -1,0 +1,74 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Core Launch (web) - Catalog",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-catalog",
+      "program": "${workspaceFolder}/catalog/bin/Debug/net6.0/catalog.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/catalog",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    },
+    {
+      "name": ".NET Core Launch (web) - Ordering",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-ordering",
+      "program": "${workspaceFolder}/ordering/bin/Debug/net6.0/ordering.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/ordering",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    },
+    {
+      "name": ".NET Core Launch (web) - Frontend",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-frontend",
+      "program": "${workspaceFolder}/frontend/bin/Debug/net6.0/frontend.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/frontend",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch All Services",
+      "configurations": [".NET Core Launch (web) - Catalog", ".NET Core Launch (web) - Ordering", ".NET Core Launch (web) - Frontend"]
+    }
+  ]
+}

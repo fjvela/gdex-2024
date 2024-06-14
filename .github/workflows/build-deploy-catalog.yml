@@ -1,0 +1,102 @@
+name: "Build and Release Catalog"
+permissions:
+  actions: write
+  contents: read
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches: [main]
+    paths:
+      - "ordering/**"
+      - ".github/workflows/build-deploy-catalog.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.run_number != 1 # don't run on the first execution after the repo creation to prevent errors
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+          #cache: true <-- todo, implement caching from https://github.com/actions/setup-dotnet?tab=readme-ov-file#caching-nuget-packages
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build with dotnet
+        run: dotnet build catalog/catalog.csproj --configuration Release
+
+      - name: dotnet publish
+        run: dotnet publish catalog/catalog.csproj -c Release
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: catalog
+          path: catalog/bin/Release/net6.0/publish
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.run_number != 1 # don't run on the first execution after the repo creation to prevent errors
+    steps:
+      - name: Wait for Web App to be ready
+        shell: pwsh
+        run: |
+          # Wait for the webapp to be ready
+          $attempts = 0
+          $maxAttempts = 10
+          $delay = 30
+          $url = "https://${{ vars.WEBAPP_CATALOG }}.azurewebsites.net"
+          do {
+              $attempts++
+              Write-Host "Attempt $attempts of $maxAttempts to check if $url is ready"
+              try {
+                  $response = Invoke-WebRequest -Uri $url -UseBasicParsing -Method Get -ErrorAction Stop
+                  Write-Host "Response code: $($response.StatusCode)"
+                  if ($response.StatusCode -eq 200) {
+                      Write-Host "Web App is ready"
+                      break
+                  }
+              } catch {
+                  Write-Host "Web App is not ready yet"
+              }
+              Start-Sleep -Seconds $delay
+          } while ($attempts -lt $maxAttempts)
+
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4.1.7
+        with:
+          name: catalog
+          path: catalog
+
+      - name: Azure Login
+        uses: azure/login@v2.0.0
+        with:
+          creds: '{"clientId":"${{ vars.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ vars.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ vars.AZURE_TENANT_ID }}"}'
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ vars.WEBAPP_CATALOG }}
+          slot-name: Production
+          package: catalog
+
+      - name: Set Web App connectionstring
+        uses: devops-actions/azure-appservice-settings@v1
+        with:
+          app-name: ${{ vars.WEBAPP_CATALOG }}
+          mask-inputs: false
+          connection-strings-json: |
+            [
+                {
+                    "name": "EVENTSCONNECTION",
+                    "value": "${{ secrets.CONNECTIONSTRINGS__EVENTSCONNECTION }}",
+                    "slotSetting": false
+                }
+            ]

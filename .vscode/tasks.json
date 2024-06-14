@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-catalog",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/catalog/catalog.csproj"
+      ],
+      "type": "process",
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build-ordering",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/ordering/ordering.csproj"
+      ],
+      "type": "process",
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "build-frontend",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/frontend/frontend.csproj"
+      ],
+      "type": "process",
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    }
+  ]
+}

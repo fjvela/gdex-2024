@@ -1,0 +1,40 @@
+﻿@model GloboTicket.Frontend.Models.Api.Event
+
+<form asp-action="SaveEvent" asp-controller="EventCatalog" method="post" class="container mt-5">
+    <div class="form-group">
+        <label for="Name">Event Name</label>
+        <input type="text" class="form-control" id="Name" asp-for="Name" placeholder="Enter event name">
+    </div>
+    <div class="form-group">
+        <label for="Artist">Artist</label>
+        <input type="text" class="form-control" id="Artist" asp-for="Artist.Name" placeholder="Enter artist name">
+    </div>
+    <div class="form-group">
+        <label for="Genre">Genre</label>
+        <input type="text" class="form-control" id="Genre" asp-for="Artist.Genre" placeholder="Enter genre">
+    </div>
+    <div class="form-group">
+        <label for="Venue">Venue</label>
+        <input type="text" class="form-control" id="Venue" asp-for="Venue" placeholder="Enter venue">
+    </div>
+    <div class="form-group">
+        <label for="Date">Date</label>
+        <input type="date" 
+               class="form-control" id="Date" asp-for="Date">
+    </div>
+    <div class="form-group">
+        <label for="Price">Price</label>
+        <input type="text"
+               class="form-control" id="Price" asp-for="Price" placeholder="Enter price">
+    </div>
+    <div class="form-group">
+        <label for="Description">Description</label>
+        <textarea class="form-control" id="Description" asp-for="Description" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+        <label for="ImageUrl">Image URL</label>
+        <input type="text" class="form-control" id="ImageUrl" asp-for="ImageUrl" placeholder="Enter image URL">
+    </div>
+    <br/>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
