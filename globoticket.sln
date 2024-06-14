@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31825.309
@@ -16,6 +16,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ordering", "ordering\ordering.csproj", "{0AA4868D-A125-4336-B055-07DBA6D61E6C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "unittests", "unittests\unittests.csproj", "{049210C3-222F-4C03-AB42-2CFD0708AA0E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "eventImporter", "eventImporter\eventImporter.csproj", "{860FE703-7072-40CA-8C19-BCAFD9CBAD91}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{049210C3-222F-4C03-AB42-2CFD0708AA0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{049210C3-222F-4C03-AB42-2CFD0708AA0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{049210C3-222F-4C03-AB42-2CFD0708AA0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{860FE703-7072-40CA-8C19-BCAFD9CBAD91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{860FE703-7072-40CA-8C19-BCAFD9CBAD91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{860FE703-7072-40CA-8C19-BCAFD9CBAD91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{860FE703-7072-40CA-8C19-BCAFD9CBAD91}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
