@@ -1,0 +1,1 @@
+gh repo edit --enable-rebase-merge=true --enable-merge-commit=false
