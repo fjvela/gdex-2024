@@ -1,0 +1,8 @@
+# Require review from the funny-frog team for any changes made in the catalog folder.
+/catalog/ @globaldevopsexperience/gdex-emergency
+/frontend/ @globaldevopsexperience/gdex-emergency
+/ordering/ @globaldevopsexperience/gdex-emergency
+
+# Ensure the codeowners file itself can't be changed without formal review
+/.github/CODEOWNERS @globaldevopsexperience/gdex-emergency
+/CODEOWNERS @globaldevopsexperience/gdex-emergency
