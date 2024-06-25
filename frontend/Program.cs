@@ -7,10 +7,14 @@ using HealthChecks.UI.Client;
 using GloboTicket.Frontend.HealthChecks;
 using Microsoft.Extensions.Options;
 
+using SmartComponents.Inference.OpenAI;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSmartComponents()
+       .WithInferenceBackend<OpenAIInferenceBackend>();
 
 builder.Services.AddHttpClient<IEventCatalogService, EventCatalogService>(
     (provider, client) =>{
@@ -26,7 +30,7 @@ builder.Services.AddSingleton<IShoppingBasketService, InMemoryShoppingBasketServ
 builder.Services.AddSingleton<Settings>();
 
 builder.Services.AddHealthChecks()
-   //.AddCheck<SlowDependencyHealthCheck>("SlowDependencyDemo", tags: new string[] { "ready" })
+   .AddCheck<SlowDependencyHealthCheck>("SlowDependencyDemo", tags: new string[] { "ready" })
    .AddProcessAllocatedMemoryHealthCheck(maximumMegabytesAllocated: 500);
 
 builder.Services.AddHttpClient(Options.DefaultName)
@@ -75,7 +79,6 @@ new HealthCheckOptions()
 app.UseHttpMetrics();
 app.UseMetricServer();
 
-app.UseEndpoints(endpoints =>
-endpoints.MapMetrics());
+app.UseEndpoints(endpoints => endpoints.MapMetrics());
 
 app.Run();
