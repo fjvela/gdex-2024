@@ -1,0 +1,54 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/dotnet
+{
+    "name": "C# (.NET)",
+    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+    "image": "mcr.microsoft.com/devcontainers/dotnet:1-6.0",
+    "features": {
+        "ghcr.io/devcontainers/features/azure-cli:1": {},
+        "ghcr.io/devcontainers/features/dotnet:2": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
+        },
+        "ghcr.io/devcontainers/features/powershell:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.csdevkit",
+                "github.vscode-github-actions",
+                "GitHub.copilot",
+                "GitHub.copilot-chat",
+                "humao.rest-client"
+            ]
+        }
+    },
+    // Features to add to the dev container. More info: https://containers.dev/features.
+    // "features": {},
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    "forwardPorts": [
+        5016,
+        5293,
+        5266
+    ],
+    "portsAttributes": {
+        "5016": {
+            "protocol": "http"
+        },
+        "5293": {
+            "protocol": "http"
+        }
+    },
+    // Use 'postCreateCommand' to run commands after the container is created.
+    "postCreateCommand": "dotnet restore globoticket.sln && dotnet build globoticket.sln",
+    // Configure tool-specific properties.
+    // "customizations": {},
+    // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+    // "remoteUser": "root"
+    "postStartCommand": "dotnet run --project catalog & dotnet run --project ordering & dotnet run --project frontend",
+    "remoteEnv": {
+        "OPEN_BROWSER": "powershell -command \"Start-Process http://localhost:5266\""
+    }
+}
